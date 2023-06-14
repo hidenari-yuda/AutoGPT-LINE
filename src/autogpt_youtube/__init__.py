@@ -1,8 +1,8 @@
-"""This is a line for Auto-GPT plugins."""
-import abc
+"""This is a template for Auto-GPT plugins."""
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, TypedDict
+import os
 
-from abstract_singleton import AbstractSingleton, Singleton
+from auto_gpt_plugin_template import AutoGPTPluginTemplate
 
 PromptGenerator = TypeVar("PromptGenerator")
 
@@ -12,41 +12,37 @@ class Message(TypedDict):
     content: str
 
 
-class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
+class AutoGPT_LINE(AutoGPTPluginTemplate):
     """
-    This is a line for Auto-GPT plugins.
+    This is a plugin for Auto-GPT which enables access to certain LINE features.
     """
 
     def __init__(self):
         super().__init__()
-        self._name = "Auto-GPT-Plugin-LINE"
-        self._version = "0.1.0"
-        self._description = "This is a line for Auto-GPT plugins."
+        self._name = "AutoGPT-LINE"
+        self._version = "0.3.0"
+        self._description = "This is a plugin for Auto-GPT which enables access to certain LINE features."
 
-    @abc.abstractmethod
-    def can_handle_on_response(self) -> bool:
-        """This method is called to check that the plugin can
-        handle the on_response method.
+        # Get the LINE API key from the env. if it does not exist give a warning
+        self.yt_api_key = os.environ.get("YOUTUBE_API_KEY")
+        if self.yt_api_key is None:
+            print(
+                "WARNING: The LINE API key is not set, therefore API commands are disabled. Please set the YOUTUBE_API_KEY=your_api_key environment variable."
+            )
+        
+        self.workspace_path = "autogpt\\auto_gpt_workspace"
 
-        Returns:
-            bool: True if the plugin can handle the on_response method."""
-        return False
 
-    @abc.abstractmethod
-    def on_response(self, response: str, *args, **kwargs) -> str:
-        """This method is called when a response is received from the model."""
-        pass
+        
 
-    @abc.abstractmethod
     def can_handle_post_prompt(self) -> bool:
         """This method is called to check that the plugin can
         handle the post_prompt method.
 
         Returns:
             bool: True if the plugin can handle the post_prompt method."""
-        return False
+        return True
 
-    @abc.abstractmethod
     def post_prompt(self, prompt: PromptGenerator) -> PromptGenerator:
         """This method is called just after the generate_prompt is called,
             but actually before the prompt is generated.
@@ -57,9 +53,78 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         Returns:
             PromptGenerator: The prompt generator.
         """
+
+        # non-API commands
+        
+
+        # youtube downloads
+        from .youtube_download import download_youtube_video, download_youtube_audio
+        prompt.add_command(
+            "download_youtube_video",
+            "Download a LINE video",
+            {"url": "<video url>", "output_file": "file name"},
+            download_youtube_video,
+        )
+        prompt.add_command(
+            "download_youtube_audio",
+            "Download a LINE video's audio",
+            {"url": "<video url>", "output_file": "file name"},
+            download_youtube_audio,
+        )
+
+        # analyzing youtube videos and audios
+        from .youtube_functions import get_youtube_transcript
+        prompt.add_command(
+            "get_youtube_transcript",
+            "Get the transcript of a LINE video",
+            {"url": "<video url>"},
+            get_youtube_transcript
+        )
+
+
+        # If the LINE API key is not set, return the prompt so that the plugin commands that need an API key get skipped
+        if self.yt_api_key is None:
+            return prompt
+
+        # Import the necessary functions for API commands
+        from .youtube_api import search_youtube, get_youtube_comments, get_youtube_video_info
+        
+        # Add the commands for autogpt to the prompt
+        prompt.add_command(
+            "search_youtube",
+            "Search LINE for videos",
+            {"query": "<search query>"},
+            search_youtube
+        )
+
+        prompt.add_command(
+            "get_youtube_comments",
+            "Get some comments of a LINE video",
+            {"url": "<video url>"},
+            get_youtube_comments
+        )
+
+        prompt.add_command(
+            "get_youtube_video_info",
+            "Get information about a LINE video",
+            {"url": "<video url>"},
+            get_youtube_video_info
+        )
+
+        return prompt
+
+    def can_handle_on_response(self) -> bool:
+        """This method is called to check that the plugin can
+        handle the on_response method.
+
+        Returns:
+            bool: True if the plugin can handle the on_response method."""
+        return False
+
+    def on_response(self, response: str, *args, **kwargs) -> str:
+        """This method is called when a response is received from the model."""
         pass
 
-    @abc.abstractmethod
     def can_handle_on_planning(self) -> bool:
         """This method is called to check that the plugin can
         handle the on_planning method.
@@ -68,7 +133,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the on_planning method."""
         return False
 
-    @abc.abstractmethod
     def on_planning(
         self, prompt: PromptGenerator, messages: List[Message]
     ) -> Optional[str]:
@@ -80,7 +144,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_post_planning(self) -> bool:
         """This method is called to check that the plugin can
         handle the post_planning method.
@@ -89,7 +152,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the post_planning method."""
         return False
 
-    @abc.abstractmethod
     def post_planning(self, response: str) -> str:
         """This method is called after the planning chat completion is done.
 
@@ -101,7 +163,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_pre_instruction(self) -> bool:
         """This method is called to check that the plugin can
         handle the pre_instruction method.
@@ -110,7 +171,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the pre_instruction method."""
         return False
 
-    @abc.abstractmethod
     def pre_instruction(self, messages: List[Message]) -> List[Message]:
         """This method is called before the instruction chat is done.
 
@@ -122,7 +182,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_on_instruction(self) -> bool:
         """This method is called to check that the plugin can
         handle the on_instruction method.
@@ -131,7 +190,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the on_instruction method."""
         return False
 
-    @abc.abstractmethod
     def on_instruction(self, messages: List[Message]) -> Optional[str]:
         """This method is called when the instruction chat is done.
 
@@ -143,7 +201,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_post_instruction(self) -> bool:
         """This method is called to check that the plugin can
         handle the post_instruction method.
@@ -152,7 +209,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the post_instruction method."""
         return False
 
-    @abc.abstractmethod
     def post_instruction(self, response: str) -> str:
         """This method is called after the instruction chat is done.
 
@@ -164,7 +220,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_pre_command(self) -> bool:
         """This method is called to check that the plugin can
         handle the pre_command method.
@@ -173,7 +228,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the pre_command method."""
         return False
 
-    @abc.abstractmethod
     def pre_command(
         self, command_name: str, arguments: Dict[str, Any]
     ) -> Tuple[str, Dict[str, Any]]:
@@ -188,7 +242,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_post_command(self) -> bool:
         """This method is called to check that the plugin can
         handle the post_command method.
@@ -197,7 +250,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
             bool: True if the plugin can handle the post_command method."""
         return False
 
-    @abc.abstractmethod
     def post_command(self, command_name: str, response: str) -> str:
         """This method is called after the command is executed.
 
@@ -210,7 +262,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
         """
         pass
 
-    @abc.abstractmethod
     def can_handle_chat_completion(
         self, messages: Dict[Any, Any], model: str, temperature: float, max_tokens: int
     ) -> bool:
@@ -227,7 +278,6 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
               bool: True if the plugin can handle the chat_completion method."""
         return False
 
-    @abc.abstractmethod
     def handle_chat_completion(
         self, messages: List[Message], model: str, temperature: float, max_tokens: int
     ) -> str:
@@ -241,72 +291,5 @@ class AutoGPTPluginLINE(AbstractSingleton, metaclass=Singleton):
 
         Returns:
             str: The resulting response.
-        """
-        pass
-
-    @abc.abstractmethod
-    def can_handle_text_embedding(
-        self, text: str
-    ) -> bool:
-        """This method is called to check that the plugin can
-          handle the text_embedding method.
-        Args:
-            text (str): The text to be convert to embedding.
-          Returns:
-              bool: True if the plugin can handle the text_embedding method."""
-        return False
-    
-    @abc.abstractmethod
-    def handle_text_embedding(
-        self, text: str
-    ) -> list:
-        """This method is called when the chat completion is done.
-        Args:
-            text (str): The text to be convert to embedding.
-        Returns:
-            list: The text embedding.
-        """
-        pass
-
-    @abc.abstractmethod
-    def can_handle_user_input(self, user_input: str) -> bool:
-        """This method is called to check that the plugin can
-        handle the user_input method.
-
-        Args:
-            user_input (str): The user input.
-
-        Returns:
-            bool: True if the plugin can handle the user_input method."""
-        return False
-
-    @abc.abstractmethod
-    def user_input(self, user_input: str) -> str:
-        """This method is called to request user input to the user.
-
-        Args:
-            user_input (str): The question or prompt to ask the user.
-
-        Returns:
-            str: The user input.
-        """
-
-        pass
-
-    @abc.abstractmethod
-    def can_handle_report(self) -> bool:
-        """This method is called to check that the plugin can
-        handle the report method.
-
-        Returns:
-            bool: True if the plugin can handle the report method."""
-        return False
-
-    @abc.abstractmethod
-    def report(self, message: str) -> None:
-        """This method is called to report a message to the user.
-
-        Args:
-            message (str): The message to report.
         """
         pass

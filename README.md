@@ -1,14 +1,55 @@
-# AutoGPT Plugin for LINE
+# Auto-GPT-Plugin-Template
+A Plugin for [Auto-GPT](https://github.com/Significant-Gravitas/Auto-GPT) that adds LINE support.
 
-The Plugin enables Auto-GPT to communicate with LINE.
+## Features
+- [x] Download LINE videos
+- [x] Download LINE audio
+- [x] Search LINE
+- [x] Download LINE Subtitles (Transcription)
+- [x] Fetch comments of a LINE video
+- [x] Get video information
 
-## Key Features:
-- Supports GET, POST, PUT, DELETE, PATCH, HEAD and OPTIONS
-- Tries to recover from strange values being used as parameters
-- Accepts custom header values
+## Requirements
+- Python
+- AutoGPT
+- ffmpeg
 
-## Installation:
-As part of the AutoGPT plugins package, follow the [installation instructions](https://github.com/Significant-Gravitas/Auto-GPT-Plugins) on the Auto-GPT-Plugins GitHub reporistory README page.
+### Plugin Installation Steps
 
-## AutoGPT Configuration
-Set `ALLOWLISTED_PLUGINS=AutoGPTLINE,example-plugin1,example-plugin2,etc` in your AutoGPT `.env` file.
+1. **Clone or download the plugin repository:**
+   Clone the plugin repository, or download the repository as a zip file.
+  
+   ![Download Zip](https://i.imgur.com/dvGqLMX.png)
+
+2. **Install the plugin's dependencies:**
+   Navigate to the plugin's folder in your terminal, and run the following command to install any required dependencies:
+
+   ``` shell
+      pip install -r requirements.txt
+   ```
+
+3. **Package the plugin as a Zip file:**
+   If you cloned the repository, compress the plugin folder as a Zip file.
+
+4. **Copy the plugin's Zip file:**
+   Place the plugin's Zip file in the `plugins` folder of the Auto-GPT repository.
+
+5. **Allowlist the plugin (optional):**
+   Add the plugin's class name to the `ALLOWLISTED_PLUGINS` in the `.env` file to avoid being prompted with a warning when loading the plugin:
+
+   ``` shell
+   ALLOWLISTED_PLUGINS=AutoGPT_LINE,example-plugin1,example-plugin2
+   ```
+
+   If the plugin is not allowlisted, you will be warned before it's loaded.
+
+6. **Configure the plugin:**
+   Add the plugin's configuration to the `.env` file:
+
+   ``` shell
+   ################################################################################
+   ### YOUTUBE
+   ################################################################################
+
+   YOUTUBE_API_KEY=your-api-key
+   ```
