@@ -1,8 +1,11 @@
-"""This is a template for Auto-GPT plugins."""
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, TypedDict
+"""This is a plugin to LINE Webhooks for Auto-GPT"""
 import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, TypeVar
 
 from auto_gpt_plugin_template import AutoGPTPluginTemplate
+from dotenv import load_dotenv
+from .line import call_webhook
 
 PromptGenerator = TypeVar("PromptGenerator")
 
@@ -14,26 +17,20 @@ class Message(TypedDict):
 
 class AutoGPT_LINE(AutoGPTPluginTemplate):
     """
-    This is a plugin for Auto-GPT which enables access to certain LINE features.
+    This is a plugin to LINE Webhooks for Auto-GPT
     """
 
     def __init__(self):
         super().__init__()
+
         self._name = "AutoGPT-LINE"
-        self._version = "0.3.0"
-        self._description = "This is a plugin for Auto-GPT which enables access to certain LINE features."
+        self._version = "0.1.0"
+        self._description = "AutoGPT LINE Webhooks integration."
 
-        # Get the LINE API key from the env. if it does not exist give a warning
-        self.yt_api_key = os.environ.get("YOUTUBE_API_KEY")
-        if self.yt_api_key is None:
-            print(
-                "WARNING: The LINE API key is not set, therefore API commands are disabled. Please set the YOUTUBE_API_KEY=your_api_key environment variable."
-            )
-        
-        self.workspace_path = "autogpt\\auto_gpt_workspace"
+        with open(str(Path(os.getcwd()) / ".env"), "r", encoding="utf=8") as fp:
+            load_dotenv(stream=fp)
 
-
-        
+        self.line_trigger = os.getenv("ZAPIER_WEBHOOK_ENDPOINT")
 
     def can_handle_post_prompt(self) -> bool:
         """This method is called to check that the plugin can
@@ -53,62 +50,15 @@ class AutoGPT_LINE(AutoGPTPluginTemplate):
         Returns:
             PromptGenerator: The prompt generator.
         """
-
-        # non-API commands
-        
-
-        # youtube downloads
-        from .youtube_download import download_youtube_video, download_youtube_audio
         prompt.add_command(
-            "download_youtube_video",
-            "Download a LINE video",
-            {"url": "<video url>", "output_file": "file name"},
-            download_youtube_video,
-        )
-        prompt.add_command(
-            "download_youtube_audio",
-            "Download a LINE video's audio",
-            {"url": "<video url>", "output_file": "file name"},
-            download_youtube_audio,
-        )
-
-        # analyzing youtube videos and audios
-        from .youtube_functions import get_youtube_transcript
-        prompt.add_command(
-            "get_youtube_transcript",
-            "Get the transcript of a LINE video",
-            {"url": "<video url>"},
-            get_youtube_transcript
-        )
-
-
-        # If the LINE API key is not set, return the prompt so that the plugin commands that need an API key get skipped
-        if self.yt_api_key is None:
-            return prompt
-
-        # Import the necessary functions for API commands
-        from .youtube_api import search_youtube, get_youtube_comments, get_youtube_video_info
-        
-        # Add the commands for autogpt to the prompt
-        prompt.add_command(
-            "search_youtube",
-            "Search LINE for videos",
-            {"query": "<search query>"},
-            search_youtube
-        )
-
-        prompt.add_command(
-            "get_youtube_comments",
-            "Get some comments of a LINE video",
-            {"url": "<video url>"},
-            get_youtube_comments
-        )
-
-        prompt.add_command(
-            "get_youtube_video_info",
-            "Get information about a LINE video",
-            {"url": "<video url>"},
-            get_youtube_video_info
+            "line_webhook",
+            "Create a new webhook call",
+            {
+                "title": "<title>",
+                "summary": "<summary>",
+                "content": "<content>",
+            },
+            call_webhook,
         )
 
         return prompt
@@ -291,5 +241,62 @@ class AutoGPT_LINE(AutoGPTPluginTemplate):
 
         Returns:
             str: The resulting response.
+        """
+        pass
+
+    def can_handle_text_embedding(self, text: str) -> bool:
+        """This method is called to check that the plugin can
+          handle the text_embedding method.
+        Args:
+            text (str): The text to be convert to embedding.
+          Returns:
+              bool: True if the plugin can handle the text_embedding method."""
+        return False
+
+    def handle_text_embedding(self, text: str) -> list:
+        """This method is called when the chat completion is done.
+        Args:
+            text (str): The text to be convert to embedding.
+        Returns:
+            list: The text embedding.
+        """
+        pass
+
+    def can_handle_user_input(self, user_input: str) -> bool:
+        """This method is called to check that the plugin can
+        handle the user_input method.
+
+        Args:
+            user_input (str): The user input.
+
+        Returns:
+            bool: True if the plugin can handle the user_input method."""
+        return False
+
+    def user_input(self, user_input: str) -> str:
+        """This method is called to request user input to the user.
+
+        Args:
+            user_input (str): The question or prompt to ask the user.
+
+        Returns:
+            str: The user input.
+        """
+
+        pass
+
+    def can_handle_report(self) -> bool:
+        """This method is called to check that the plugin can
+        handle the report method.
+
+        Returns:
+            bool: True if the plugin can handle the report method."""
+        return False
+
+    def report(self, message: str) -> None:
+        """This method is called to report a message to the user.
+
+        Args:
+            message (str): The message to report.
         """
         pass

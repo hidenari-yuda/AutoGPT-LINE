@@ -1,5 +1,7 @@
 @echo off
 
+set GPT_HOME=<your root Auto-GPT>
+
 if "%1" == "clean" (
   echo Removing build artifacts and temporary files...
   call :clean
@@ -9,8 +11,14 @@ if "%1" == "clean" (
 ) else if "%1" == "style" (
   echo Running code formatters...
   call :style
+) else if "%1" == "package" (
+  echo Packaging archive...
+  call :package
+) else if "%1" == "unittest" (
+  echo Running tests
+  call :unittest
 ) else (
-  echo Usage: %0 [clean^|qa^|style]
+  echo Usage: %0 [clean^|qa^|style^|package]
   exit /b 1
 )
 
@@ -42,3 +50,13 @@ exit /b 0
   @black --exclude=".*\/*(dist|venv|.venv|test-results)\/*.*" .
   echo Done!
   exit /b 0
+
+:package
+   python -m zipfile -c .\builds\AutoGPT_LINE.zip  src\AutoGPT_LINE
+   copy .\builds\AutoGPT_LINE.zip %GPT_HOME%\plugins
+   python -m autogpt --debug
+   exit /b 0
+
+:unittest
+   python -m unittest src/AutoGPT_LINE/line_test.py -v
+   exit /b 0
